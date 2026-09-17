@@ -1,0 +1,480 @@
+# Sample workflow for building and deploying a Next.js site to GitHub Pages
+#
+# To get started with Next.js see: https://nextjs.org/docs/getting-started
+#
+name: Deploy Next.js site to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Detect package manager
+        id: detect-package-manager
+        run: |
+          if [ -f "${{ github.workspace }}/yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=yarn" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "Unable to determine package manager"
+            exit 1
+          fi
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ${{ steps.detect-package-manager.outputs.manager }}
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          # Automatically inject basePath in your Next.js configuration file and disable
+          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
+          #
+          # You may remove this line if you want to manage the configuration yourself.
+          static_site_generator: next
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          # Generate a new cache whenever packages or source files change.
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          # If source files changed but packages didn't, rebuild from a prior cache.
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+      - name: Install dependencies
+        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Build with Next.js
+        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+
+
+
+        <!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parth's Progress</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bgDark: '#0b0d14',
+            cardDark: '#121520',
+            cardBorder: '#1e2235',
+            accentPurple: '#7c3aed',
+            accentBlue: '#2563eb'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgDark text-gray-200 font-sans min-h-screen pb-12">
+
+  <script>
+    const SUPABASE_URL = 'https://jiijrzxhbszmuzzagtac.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_oQxfh-x21KGL-CAPq3G-GQ_ISnyZX8R';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+
+  <!-- Top Navigation Header -->
+  <header class="max-w-4xl mx-auto px-4 pt-6 pb-2">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <span>🌙</span> Parth's Progress
+        </h1>
+        <p class="text-xs text-gray-400 mt-0.5">JEE Main + MHT-CET · Class 11 & 12</p>
+      </div>
+      <a href="https://allen.in" target="_blank" class="bg-accentBlue hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition">
+        ALLEN ↗
+      </a>
+    </div>
+
+    <div class="mt-4 flex items-center gap-2">
+      <button class="bg-cardDark border border-cardBorder text-xs text-gray-300 px-3 py-1.5 rounded-full hover:border-gray-500 transition">
+        Focus mode
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex gap-2 mt-6 border-b border-cardBorder pb-2 overflow-x-auto">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-accentPurple/20 text-accentPurple border border-accentPurple/40">Dashboard</button>
+      <button onclick="switchTab('chapters')" id="tab-chapters" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white">Chapters</button>
+      <button onclick="switchTab('modules')" id="tab-modules" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white">Modules</button>
+      <button onclick="switchTab('tests')" id="tab-tests" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white">Tests & Mocks</button>
+      <button onclick="switchTab('mistakes')" id="tab-mistakes" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white">Mistakes</button>
+    </nav>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 mt-6">
+
+    <!-- DASHBOARD VIEW -->
+    <section id="view-dashboard" class="tab-content space-y-6">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-xl">
+          <p class="text-xs text-gray-400">Chapters</p>
+          <p class="text-2xl font-bold text-white mt-1" id="dash-chapters-count">0/0</p>
+          <p class="text-xs text-gray-500 mt-1" id="dash-chapters-pct">0% complete</p>
+        </div>
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-xl">
+          <p class="text-xs text-gray-400">Tests & mocks</p>
+          <p class="text-2xl font-bold text-white mt-1" id="dash-tests-count">0</p>
+          <p class="text-xs text-gray-500 mt-1">recorded</p>
+        </div>
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-xl">
+          <p class="text-xs text-gray-400">Modules</p>
+          <p class="text-2xl font-bold text-white mt-1" id="dash-modules-count">0</p>
+          <p class="text-xs text-gray-500 mt-1">tracked</p>
+        </div>
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-xl">
+          <p class="text-xs text-gray-400">Mistakes to revisit</p>
+          <p class="text-2xl font-bold text-white mt-1" id="dash-mistakes-count">0</p>
+          <p class="text-xs text-gray-500 mt-1">saved</p>
+        </div>
+      </div>
+
+      <div class="bg-cardDark border border-cardBorder p-5 rounded-xl">
+        <h3 class="text-sm font-semibold text-white">Overall chapter progress</h3>
+        <div class="w-full bg-gray-800 h-2.5 rounded-full mt-3 overflow-hidden">
+          <div id="dash-progress-bar" class="bg-accentPurple h-full w-0 transition-all duration-300"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2" id="dash-progress-sub">0% complete · Keep the streak alive.</p>
+      </div>
+
+      <div class="bg-cardDark border border-cardBorder p-4 rounded-xl">
+        <p class="text-xs font-medium text-gray-400 mb-3">Quick add</p>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="switchTab('chapters')" class="bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700">+ Chapter</button>
+          <button onclick="switchTab('tests')" class="bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700">+ Test</button>
+          <button onclick="switchTab('modules')" class="bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700">+ Module</button>
+          <button onclick="switchTab('mistakes')" class="bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700">+ Mistake</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTERS VIEW -->
+    <section id="view-chapters" class="tab-content hidden space-y-6">
+      <div>
+        <h2 class="text-lg font-bold text-white">Chapter tracker</h2>
+        <p class="text-xs text-gray-400">Track each chapter's completion, module, PYQs and test status.</p>
+      </div>
+
+      <div class="flex gap-3">
+        <select id="filter-class" onchange="renderChapters()" class="bg-cardDark border border-cardBorder text-xs text-white p-2 rounded-lg w-1/2">
+          <option value="All">All classes</option>
+          <option value="11">Class 11</option>
+          <option value="12">Class 12</option>
+        </select>
+        <select id="filter-subject" onchange="renderChapters()" class="bg-cardDark border border-cardBorder text-xs text-white p-2 rounded-lg w-1/2">
+          <option value="All">All subjects</option>
+          <option value="Physics">Physics</option>
+          <option value="Chemistry">Chemistry</option>
+          <option value="Mathematics">Mathematics</option>
+        </select>
+      </div>
+
+      <div id="chapters-list-container" class="space-y-6"></div>
+
+      <div class="bg-cardDark border border-cardBorder p-4 rounded-xl space-y-3">
+        <h3 class="text-sm font-semibold text-white">Add a chapter</h3>
+        <input id="new-chap-name" type="text" placeholder="Chapter name" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none focus:border-accentPurple" />
+        <div class="grid grid-cols-2 gap-2">
+          <select id="new-chap-class" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg">
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select id="new-chap-subject" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg">
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Mathematics">Mathematics</option>
+          </select>
+        </div>
+        <button onclick="addChapter()" class="w-full bg-accentPurple hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-lg transition">Add chapter</button>
+      </div>
+    </section>
+
+    <!-- MODULES VIEW -->
+    <section id="view-modules" class="tab-content hidden space-y-6">
+      <h2 class="text-lg font-bold text-white">Module tracker</h2>
+      <div class="bg-cardDark border border-cardBorder p-4 rounded-xl space-y-3">
+        <input id="module-name" type="text" placeholder="Module / book / worksheet name" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+        <div class="grid grid-cols-2 gap-2">
+          <select id="module-class" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg">
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select id="module-subject" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg">
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Mathematics">Mathematics</option>
+          </select>
+        </div>
+        <button onclick="addModule()" class="w-full bg-accentPurple hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-lg">Add module</button>
+      </div>
+      <div id="modules-list" class="space-y-2 text-xs text-gray-400"></div>
+    </section>
+
+    <!-- TESTS VIEW -->
+    <section id="view-tests" class="tab-content hidden space-y-6">
+      <h2 class="text-lg font-bold text-white">Tests & mocks</h2>
+      <div class="bg-cardDark border border-cardBorder p-4 rounded-xl space-y-3">
+        <input id="test-name" type="text" placeholder="Test / mock name" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+        <div class="grid grid-cols-2 gap-2">
+          <input id="test-score" type="number" placeholder="Total score / marks" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+          <input id="test-accuracy" type="number" placeholder="Accuracy %" class="bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+        </div>
+        <textarea id="test-notes" placeholder="Notes, analysis, things to improve..." class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none h-20"></textarea>
+        <button onclick="addTest()" class="w-full bg-accentPurple hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-lg">Save test</button>
+      </div>
+      <div id="tests-list" class="space-y-2"></div>
+    </section>
+
+    <!-- MISTAKES VIEW -->
+    <section id="view-mistakes" class="tab-content hidden space-y-6">
+      <h2 class="text-lg font-bold text-white">Mistake / revisit log</h2>
+      <div class="bg-cardDark border border-cardBorder p-4 rounded-xl space-y-3">
+        <input id="mistake-concept" type="text" placeholder="Question / concept to revisit" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+        <select id="mistake-subject" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg">
+          <option value="Physics">Physics</option>
+          <option value="Chemistry">Chemistry</option>
+          <option value="Mathematics">Mathematics</option>
+        </select>
+        <input id="mistake-topic" type="text" placeholder="Topic / chapter" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none" />
+        <textarea id="mistake-reason" placeholder="Why you got it wrong / what to remember" class="w-full bg-bgDark border border-cardBorder text-xs text-white p-2.5 rounded-lg outline-none h-20"></textarea>
+        <button onclick="addMistake()" class="w-full bg-accentPurple hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-lg">Save mistake</button>
+      </div>
+      <div id="mistakes-list" class="space-y-2"></div>
+    </section>
+
+  </main>
+
+  <script>
+    let chaptersData = [];
+    let testsData = [];
+    let modulesData = [];
+    let mistakesData = [];
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white';
+      });
+
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tabName}`);
+      activeBtn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-accentPurple/20 text-accentPurple border border-accentPurple/40';
+    }
+
+    async function loadData() {
+      try {
+        const { data: ch } = await supabaseClient.from('chapters').select('*');
+        if (ch) chaptersData = ch;
+
+        const { data: ts } = await supabaseClient.from('tests').select('*');
+        if (ts) testsData = ts;
+
+        const { data: md } = await supabaseClient.from('modules').select('*');
+        if (md) modulesData = md;
+
+        const { data: ms } = await supabaseClient.from('mistakes').select('*');
+        if (ms) mistakesData = ms;
+
+        renderDashboard();
+        renderChapters();
+        renderModules();
+        renderTests();
+        renderMistakes();
+      } catch (err) {
+        console.error('Connection error:', err);
+      }
+    }
+
+    function renderDashboard() {
+      const completed = chaptersData.filter(c => c.module && c.pyq && c.test).length;
+      const total = chaptersData.length || 1;
+      const pct = Math.round((completed / total) * 100);
+
+      document.getElementById('dash-chapters-count').innerText = `${completed}/${total}`;
+      document.getElementById('dash-chapters-pct').innerText = `${pct}% complete`;
+      document.getElementById('dash-progress-bar').style.width = `${pct}%`;
+      document.getElementById('dash-progress-sub').innerText = `${pct}% complete · Keep the streak alive.`;
+
+      document.getElementById('dash-tests-count').innerText = testsData.length;
+      document.getElementById('dash-modules-count').innerText = modulesData.length;
+      document.getElementById('dash-mistakes-count').innerText = mistakesData.length;
+    }
+
+    function renderChapters() {
+      const filterClass = document.getElementById('filter-class').value;
+      const filterSubject = document.getElementById('filter-subject').value;
+      const container = document.getElementById('chapters-list-container');
+
+      let filtered = chaptersData.filter(item => {
+        const matchClass = filterClass === 'All' || item.class_level.toString() === filterClass;
+        const matchSubject = filterSubject === 'All' || item.subject === filterSubject;
+        return matchClass && matchSubject;
+      });
+
+      const subjects = ['Physics', 'Chemistry', 'Mathematics'];
+      container.innerHTML = '';
+
+      subjects.forEach(sub => {
+        const subChapters = filtered.filter(c => c.subject === sub);
+        if (subChapters.length === 0) return;
+
+        let completedCount = subChapters.filter(c => c.module && c.pyq && c.test).length;
+
+        let html = `
+          <div class="bg-cardDark border border-cardBorder p-4 rounded-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+              <h3 class="font-bold text-white flex items-center gap-2"><span>📌</span> ${sub}</h3>
+              <span class="text-xs text-gray-400 font-mono">${completedCount}/${subChapters.length}</span>
+            </div>
+            <div class="space-y-2">
+        `;
+
+        subChapters.forEach((ch, idx) => {
+          html += `
+            <div class="flex items-center justify-between text-xs py-1 border-b border-gray-800/40 last:border-0">
+              <span class="text-gray-300 font-medium">${idx + 1}. ${ch.name}</span>
+              <div class="flex items-center gap-1.5">
+                <button onclick="toggleChapterTag(${ch.id}, 'module', ${!ch.module})" class="px-2 py-0.5 rounded text-[10px] font-bold ${ch.module ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-gray-800 text-gray-500'}">MODULE</button>
+                <button onclick="toggleChapterTag(${ch.id}, 'pyq', ${!ch.pyq})" class="px-2 py-0.5 rounded text-[10px] font-bold ${ch.pyq ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-gray-800 text-gray-500'}">PYQs</button>
+                <button onclick="toggleChapterTag(${ch.id}, 'test', ${!ch.test})" class="px-2 py-0.5 rounded text-[10px] font-bold ${ch.test ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-gray-800 text-gray-500'}">TEST</button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    async function toggleChapterTag(id, field, value) {
+      await supabaseClient.from('chapters').update({ [field]: value }).eq('id', id);
+      const target = chaptersData.find(c => c.id === id);
+      if (target) target[field] = value;
+      renderChapters();
+      renderDashboard();
+    }
+
+    async function addChapter() {
+      const name = document.getElementById('new-chap-name').value;
+      const class_level = parseInt(document.getElementById('new-chap-class').value);
+      const subject = document.getElementById('new-chap-subject').value;
+
+      if (!name) return;
+
+      const { data } = await supabaseClient.from('chapters').insert([{ name, class_level, subject }]).select();
+      if (data) chaptersData.push(data[0]);
+
+      document.getElementById('new-chap-name').value = '';
+      renderChapters();
+      renderDashboard();
+    }
+
+    async function addModule() {
+      const name = document.getElementById('module-name').value;
+      const class_level = parseInt(document.getElementById('module-class').value);
+      const subject = document.getElementById('module-subject').value;
+      if (!name) return;
+
+      const { data } = await supabaseClient.from('modules').insert([{ name, class_level, subject }]).select();
+      if (data) modulesData.push(data[0]);
+      document.getElementById('module-name').value = '';
+      renderModules();
+      renderDashboard();
+    }
+
+    function renderModules() {
+      const container = document.getElementById('modules-list');
+      container.innerHTML = modulesData.map(m => `<div class="p-3 bg-cardDark border border-cardBorder rounded-lg">${m.name} (${m.subject} - Class ${m.class_level})</div>`).join('');
+    }
+
+    async function addTest() {
+      const name = document.getElementById('test-name').value;
+      const total_score = parseInt(document.getElementById('test-score').value) || 0;
+      const accuracy = parseFloat(document.getElementById('test-accuracy').value) || 0;
+      if (!name) return;
+
+      const { data } = await supabaseClient.from('tests').insert([{ name, total_score, accuracy }]).select();
+      if (data) testsData.push(data[0]);
+      document.getElementById('test-name').value = '';
+      renderTests();
+      renderDashboard();
+    }
+
+    function renderTests() {
+      const container = document.getElementById('tests-list');
+      container.innerHTML = testsData.map(t => `<div class="p-3 bg-cardDark border border-cardBorder rounded-lg text-xs text-gray-200"><strong>${t.name}</strong> - Score: ${t.total_score} (${t.accuracy}% acc)</div>`).join('');
+    }
+
+    async function addMistake() {
+      const concept = document.getElementById('mistake-concept').value;
+      const subject = document.getElementById('mistake-subject').value;
+      const topic = document.getElementById('mistake-topic').value;
+      const reason = document.getElementById('mistake-reason').value;
+      if (!concept) return;
+
+      const { data } = await supabaseClient.from('mistakes').insert([{ concept, subject, topic, reason }]).select();
+      if (data) mistakesData.push(data[0]);
+      document.getElementById('mistake-concept').value = '';
+      renderMistakes();
+      renderDashboard();
+    }
+
+    function renderMistakes() {
+      const container = document.getElementById('mistakes-list
